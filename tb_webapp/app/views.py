@@ -1,9 +1,14 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from django.contrib import messages
-from .forms import UserRegisterForm
+from .forms import UserRegisterForm, MLForm
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
+
+import joblib
+from . import ml_models
+
+from app.ml_models.lstm import result
 
 @login_required
 def index(request):
@@ -26,3 +31,45 @@ def logout_view(request):
     logout(request)
     messages.info(request, f'You are now logged out!')
     return redirect('login')
+
+def arima_view(request):
+    # put arima in model
+    if request.method == "POST":
+        form = MLForm(request.POST)
+        if form.is_valid():
+            date = form.cleaned_data['date'].strftime("%Y-%m-%d")
+            messages.success(request, f'Prediction Success')
+            ml_model = joblib.load('app/ml_models/arima_model.joblib')
+            pred = ml_model.predict(date)
+            return render(request, 'app/arima.html', {'form': form, 'pred': round(pred[date], 2)})
+            
+    else:
+        form = MLForm()
+    return render(request, 'app/arima.html', {'form': form})
+
+def expo_view(request):
+    if request.method == "POST":
+        form = MLForm(request.POST)
+        if form.is_valid():
+            date = form.cleaned_data['date'].strftime("%Y-%m-%d")
+            messages.success(request, f'Prediction Success')
+            ml_model = joblib.load('app/ml_models/expo_model.joblib')
+            pred = ml_model.predict(date)
+            return render(request, 'app/expo.html', {'form': form, 'pred': round(pred[date], 2)})
+            
+    else:
+        form = MLForm()
+    return render(request, 'app/expo.html', {'form': form})
+
+def lstm_view(request):
+    if request.method == "POST":
+        form = MLForm(request.POST)
+        if form.is_valid():
+            date = form.cleaned_data['date'].strftime("%Y-%m-%d")
+            messages.success(request, f'Prediction Success')    
+            pred = result.loc[date].DIAGNOSED
+            return render(request, 'app/lstm.html', {'form': form, 'pred': round(pred, 2)})
+            
+    else:
+        form = MLForm()
+    return render(request, 'app/lstm.html', {'form': form})
