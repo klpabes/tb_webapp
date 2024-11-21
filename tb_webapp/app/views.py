@@ -32,43 +32,43 @@ def logout_view(request):
     messages.info(request, f'You are now logged out!')
     return redirect('login')
 
+@login_required
 def arima_view(request):
     # put arima in model
     if request.method == "POST":
         form = MLForm(request.POST)
         if form.is_valid():
             date = form.cleaned_data['date'].strftime("%Y-%m-%d")
-            messages.success(request, f'Prediction Success')
             ml_model = joblib.load('app/ml_models/arima_model.joblib')
             pred = ml_model.predict(date)
-            return render(request, 'app/arima.html', {'form': form, 'pred': round(pred[date], 2)})
-            
+            return render(request, 'app/arima.html', {'form': form, 'pred': round(pred[date], 2), 'successful_submit': True})
+            true
     else:
         form = MLForm()
     return render(request, 'app/arima.html', {'form': form})
 
+@login_required
 def expo_view(request):
     if request.method == "POST":
         form = MLForm(request.POST)
         if form.is_valid():
             date = form.cleaned_data['date'].strftime("%Y-%m-%d")
-            messages.success(request, f'Prediction Success')
             ml_model = joblib.load('app/ml_models/expo_model.joblib')
             pred = ml_model.predict(date)
-            return render(request, 'app/expo.html', {'form': form, 'pred': round(pred[date], 2)})
+            return render(request, 'app/expo.html', {'form': form, 'pred': round(pred[date], 2), 'successful_submit': True})
             
     else:
         form = MLForm()
     return render(request, 'app/expo.html', {'form': form})
 
+@login_required
 def lstm_view(request):
     if request.method == "POST":
         form = MLForm(request.POST)
         if form.is_valid():
-            date = form.cleaned_data['date'].strftime("%Y-%m-%d")
-            messages.success(request, f'Prediction Success')    
+            date = form.cleaned_data['date'].strftime("%Y-%m-%d")    
             pred = result.loc[date].DIAGNOSED
-            return render(request, 'app/lstm.html', {'form': form, 'pred': round(pred, 2)})
+            return render(request, 'app/lstm.html', {'form': form, 'pred': round(pred, 2), 'successful_submit': True})
             
     else:
         form = MLForm()
