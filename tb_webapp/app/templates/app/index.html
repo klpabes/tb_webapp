@@ -5,5 +5,10 @@ Home
 {% endblock %}
 
 {% block body %}
-<h1>This is home</h1>
+  <div class="jumbotron">
+    <h1 class="display-4">Hello, {{ user }}!</h1>
+    <p class="lead">This is a Tuberculosis Prediction Web Application for the region of Zamboanga del Sur, using ARIMA, Exponential Smoothing and LSTM.</p>
+    <hr class="my-4">
+    <p>To predict, pick on one of the machine learning models listed in the navbar.</p>
+  </div>
 {% endblock body %}
