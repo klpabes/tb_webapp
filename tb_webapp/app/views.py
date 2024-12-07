@@ -4,6 +4,7 @@ from django.contrib import messages
 from .forms import UserRegisterForm, MLForm
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
+import pandas as pd
 
 import joblib
 from . import ml_models
@@ -38,11 +39,14 @@ def arima_view(request):
     if request.method == "POST":
         form = MLForm(request.POST)
         if form.is_valid():
-            date = form.cleaned_data['date'].strftime("%Y-%m-%d")
+            year = form.cleaned_data['year']
             ml_model = joblib.load('app/ml_models/arima_model.joblib')
-            pred = ml_model.predict(date)
-            return render(request, 'app/arima.html', {'form': form, 'pred': round(pred[date], 2), 'successful_submit': True})
-            true
+            pred = mod.predict(start=f"{year}-01-01", end=f"{year}-12-01", typ='levels')
+            # date = form.cleaned_data['year'].strftime("%Y-%m-%d")
+            # ml_model = joblib.load('app/ml_models/arima_model.joblib')
+            # pred = ml_model.predict(date)
+            # return render(request, 'app/arima.html', {'form': form, 'pred': round(pred[date], 2), 'successful_submit': True})
+            return render(request, 'app/arima.html', {'form': form, 'year': year})
     else:
         form = MLForm()
     return render(request, 'app/arima.html', {'form': form})
