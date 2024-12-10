@@ -21,6 +21,31 @@ Exponential Smoothing
     </form>
   </div>
 
+    {% if graphic %}
+    <div class="d-flex justify-content-center">
+      <img src="data:image/png;base64, {{ graphic|safe }}" alt="graph">
+    </div>
+    {% endif %}
+
+    <table class="table mt-3">
+      <thead>
+        <tr>
+          {% for column in df.columns %}
+            <th class="table-secondary">{{ column }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for index, row in df.iterrows %}
+          <tr>
+            {% for item in row %}
+              <td>{{ item }}</td>
+            {% endfor %}
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
   <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">

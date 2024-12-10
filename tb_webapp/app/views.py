@@ -5,11 +5,16 @@ from .forms import UserRegisterForm, MLForm
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 import pandas as pd
+import numpy as np
+from .utils import get_graph
 
 import joblib
 from . import ml_models
 
 from app.ml_models.lstm import result
+
+df = pd.read_csv('app/ml_models/diagnosed_final.csv', parse_dates=['DATE'], index_col='DATE')
+df['DATE'] = df.index
 
 @login_required
 def index(request):
@@ -41,12 +46,14 @@ def arima_view(request):
         if form.is_valid():
             year = form.cleaned_data['year']
             ml_model = joblib.load('app/ml_models/arima_model.joblib')
-            pred = mod.predict(start=f"{year}-01-01", end=f"{year}-12-01", typ='levels')
-            # date = form.cleaned_data['year'].strftime("%Y-%m-%d")
-            # ml_model = joblib.load('app/ml_models/arima_model.joblib')
-            # pred = ml_model.predict(date)
-            # return render(request, 'app/arima.html', {'form': form, 'pred': round(pred[date], 2), 'successful_submit': True})
-            return render(request, 'app/arima.html', {'form': form, 'year': year})
+            pred = np.round(ml_model.predict(start=f"{year}-01-01", end=f"{year}-12-01"), 2)
+            filtered = df[df['DATE'].dt.year == int(year)]['DIAGNOSED']
+            pred = pd.DataFrame({'DATE':pred.index, 'PREDICTED':pred.values}, index=pred.index)
+            pred['MONTH'] = pred['DATE'].dt.month_name()
+            df_final = pd.concat([pred['MONTH'], filtered, pred['PREDICTED']], axis=1)
+            df_final = df_final.rename(columns={'DIAGNOSED': 'ACTUAL'})
+            graphic = get_graph(df_final, year)
+            return render(request, 'app/arima.html', {'form': form, 'df':df_final, 'graphic': graphic})
     else:
         form = MLForm()
     return render(request, 'app/arima.html', {'form': form})
@@ -56,10 +63,16 @@ def expo_view(request):
     if request.method == "POST":
         form = MLForm(request.POST)
         if form.is_valid():
-            date = form.cleaned_data['date'].strftime("%Y-%m-%d")
+            year = form.cleaned_data['year']
             ml_model = joblib.load('app/ml_models/expo_model.joblib')
-            pred = ml_model.predict(date)
-            return render(request, 'app/expo.html', {'form': form, 'pred': round(pred[date], 2), 'successful_submit': True})
+            pred = np.round(ml_model.predict(start=f"{year}-01-01", end=f"{year}-12-01"), 2)
+            filtered = df[df['DATE'].dt.year == int(year)]['DIAGNOSED']
+            pred = pd.DataFrame({'DATE':pred.index, 'PREDICTED':pred.values}, index=pred.index)
+            pred['MONTH'] = pred['DATE'].dt.month_name()
+            df_final = pd.concat([pred['MONTH'], filtered, pred['PREDICTED']], axis=1)
+            df_final = df_final.rename(columns={'DIAGNOSED': 'ACTUAL'})
+            graphic = get_graph(df_final, year)
+            return render(request, 'app/expo.html', {'form': form, 'df':df_final, 'graphic': graphic})
             
     else:
         form = MLForm()
@@ -70,9 +83,15 @@ def lstm_view(request):
     if request.method == "POST":
         form = MLForm(request.POST)
         if form.is_valid():
-            date = form.cleaned_data['date'].strftime("%Y-%m-%d")    
-            pred = result.loc[date].DIAGNOSED
-            return render(request, 'app/lstm.html', {'form': form, 'pred': round(pred, 2), 'successful_submit': True})
+            year = form.cleaned_data['year'] 
+            pred = result[result['DATE'].dt.strftime('%Y') == year]
+            filtered = df[df['DATE'].dt.year == int(year)]['DIAGNOSED']
+            pred = pd.DataFrame({'DATE':pred['DATE'], 'PREDICTED':pred['DIAGNOSED']}, index=pred['DATE'])
+            pred['MONTH'] = pred['DATE'].dt.month_name()
+            df_final = pd.concat([pred['MONTH'], filtered, pred['PREDICTED']], axis=1)
+            df_final = df_final.rename(columns={'DIAGNOSED': 'ACTUAL'})
+            graphic = get_graph(df_final, year)
+            return render(request, 'app/lstm.html', {'form': form, 'df':df_final, 'graphic': graphic})
             
     else:
         form = MLForm()
